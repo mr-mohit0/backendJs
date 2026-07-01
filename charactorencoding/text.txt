@@ -1,0 +1,1 @@
+abc // command to find  the bites and bits  of charactors !!!!!!!!!!!xxd -b text.txt

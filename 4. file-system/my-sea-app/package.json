@@ -1,0 +1,12 @@
+{
+  "name": "my-sea-app",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+ "scripts": {
+  "build": "sea -m index.js -o myapphiii.exe"
+},
+  "devDependencies": {
+    "node-sea": "^0.3.0"
+  }
+}

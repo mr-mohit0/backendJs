@@ -10,7 +10,7 @@ function requestHandler(req,res)
     {
         console.log(req.url);
         res.writeHead(404, { 'content-type': 'text/plain' });
-         return res.end('page note found ! ');
+         return res.end('page note found !😭😵‍💫🤭🪦😀😄⛔🔃➕➖🔄️👇🔄️hello bhailogkya hal chal  ');
     }
 }
 module.exports = requestHandler;

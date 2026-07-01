@@ -1,0 +1,385 @@
+npx is a tool that comes with npm, used to execute Node.js packages without installing them globally. It first checks local and global installations, and if the package is not found, it downloads and runs it temporarily from the npm registry.
+
+
+steps of how npx works in our system 
+
+
+`npx` can look like magic at first, but internally it follows a fairly straightforward process.
+
+Let's go through the **exact steps** that happen when you run an `npx` command.
+
+Suppose you run:
+
+```bash
+npx cowsay "Hello"
+```
+
+---
+
+# Step 1: Your shell receives the command
+
+When you press Enter:
+
+```bash
+npx cowsay "Hello"
+```
+
+your shell (Bash, Zsh, PowerShell, etc.) splits it into:
+
+```
+Command:
+    npx
+
+Arguments:
+    cowsay
+    Hello
+```
+
+The shell now needs to find the executable named **npx**.
+
+It searches every directory listed in your `PATH` environment variable.
+
+For example:
+
+```
+PATH=
+
+/usr/local/bin
+/usr/bin
+/home/mohit/.npm/bin
+...
+```
+
+Eventually it finds something like
+
+```
+/usr/bin/npx
+```
+
+or on Windows
+
+```
+C:\Program Files\nodejs\npx.cmd
+```
+
+Then the shell starts the `npx` program.
+
+---
+
+# Step 2: npx starts as a Node program
+
+`npx` itself is just a Node.js executable.
+
+It receives
+
+```
+argv[0] -> node
+
+argv[1] -> npx
+
+argv[2] -> cowsay
+
+argv[3] -> Hello
+```
+
+Now it knows
+
+```
+Package:
+    cowsay
+
+Arguments:
+    Hello
+```
+
+---
+
+# Step 3: It checks the current project's local binaries
+
+Suppose your project is
+
+```
+project/
+
+node_modules/
+    .bin/
+        cowsay
+```
+
+The first place `npx` checks is
+
+```
+node_modules/.bin/
+```
+
+because locally installed packages should be preferred.
+
+It checks
+
+```
+node_modules/.bin/cowsay
+```
+
+If it exists...
+
+✅ It runs it immediately.
+
+No download occurs.
+
+---
+
+# Step 4: If not found locally
+
+Suppose
+
+```
+project/
+
+node_modules/
+    .bin/
+        (no cowsay)
+```
+
+Now `npx` checks whether the package exists somewhere else (such as in npm's cache).
+
+---
+
+# Step 5: Check npm cache
+
+npm keeps downloaded packages in a cache directory.
+
+Examples:
+
+Linux
+
+```
+~/.npm
+```
+
+Windows
+
+```
+C:\Users\<username>\AppData\Local\npm-cache
+```
+
+If the requested package is already cached,
+
+```
+cowsay
+```
+
+it can reuse it instead of downloading it again.
+
+---
+
+# Step 6: Download if necessary
+
+If the package isn't available locally or in the cache, `npx` asks the npm registry for it.
+
+It performs roughly this process:
+
+```
+Internet
+
+↓
+
+registry.npmjs.org
+
+↓
+
+Download package tarball
+
+↓
+
+Extract package
+
+↓
+
+Store in npm cache
+```
+
+---
+
+# Step 7: Find the executable
+
+Every npm package may contain a `package.json`.
+
+Example:
+
+```json
+{
+  "name": "cowsay",
+  "bin": {
+    "cowsay": "./cli.js"
+  }
+}
+```
+
+The `"bin"` field tells `npx`:
+
+> "This file is the executable."
+
+---
+
+# Step 8: Create a temporary execution environment
+
+Instead of installing the package into your project,
+
+`npx` temporarily makes the executable available by adjusting the environment (including `PATH`) for the child process.
+
+Conceptually:
+
+```
+Temporary PATH
+
+↓
+
+cached package/bin
+
+↓
+
+node_modules/.bin
+
+↓
+
+existing PATH
+```
+
+This lets it execute the command without permanently installing it as a project dependency.
+
+---
+
+# Step 9: Execute the binary
+
+Now it runs something equivalent to
+
+```
+node cli.js Hello
+```
+
+or, if the binary is directly executable,
+
+```
+./cli.js Hello
+```
+
+The package starts running.
+
+---
+
+# Step 10: Pass your arguments
+
+Everything after the package name is forwarded.
+
+For example
+
+```bash
+npx cowsay Hello World
+```
+
+becomes
+
+```
+cowsay
+
+Arguments
+
+Hello
+World
+```
+
+---
+
+# Step 11: Show output
+
+The child process writes to stdout.
+
+```
+ ___________
+< Hello >
+ -----------
+        \   ^__^
+         \  (oo)\_______
+            (__)\       )\/\
+                ||----w |
+                ||     ||
+```
+
+---
+
+# Step 12: Clean up
+
+When the process finishes:
+
+* The child process exits.
+* Temporary execution state is removed.
+* The package remains in npm's cache (so future runs may be faster).
+* It is **not** added to your project's `package.json` or `node_modules` unless you explicitly install it with `npm install`.
+
+---
+
+## Overall Flow
+
+```text
+You type
+
+npx cowsay "Hello"
+
+        │
+        ▼
+Shell finds npx executable
+        │
+        ▼
+npx starts
+        │
+        ▼
+Check node_modules/.bin
+        │
+   ┌────┴────┐
+   │         │
+Found     Not Found
+   │         │
+   ▼         ▼
+ Run     Check npm cache
+              │
+        ┌─────┴─────┐
+        │           │
+     Found      Not Found
+        │           │
+        ▼           ▼
+      Run      Download package
+                    │
+                    ▼
+           Read package.json "bin"
+                    │
+                    ▼
+       Create temporary execution environment
+                    │
+                    ▼
+           Execute the package
+                    │
+                    ▼
+             Show output
+                    │
+                    ▼
+          Exit (package stays cached)
+```
+
+### Example
+
+If you run:
+
+```bash
+npx create-react-app my-app
+```
+
+the flow is:
+
+1. Your shell starts `npx`.
+2. `npx` looks for `create-react-app` in `./node_modules/.bin`.
+3. If it's not there, it checks the npm cache.
+4. If needed, it downloads `create-react-app` from the npm registry.
+5. It reads the package's `bin` entry to find the CLI.
+6. It temporarily makes that executable available and runs it with the argument `my-app`.
+7. The CLI creates the React project.
+8. When it finishes, `create-react-app` is **not** added to your project's dependencies just because you used `npx`; it may remain only in the npm cache for future use.
