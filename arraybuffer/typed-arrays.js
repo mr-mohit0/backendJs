@@ -1,0 +1,17 @@
+const arraybuffer = new ArrayBuffer(4);
+const typedarray1 = new Uint8Array(arraybuffer);
+const typedarray2 = new Uint16Array(arraybuffer);
+const typedarray3 = new Uint32Array(arraybuffer);
+console.log(typedarray1);
+console.log(typedarray2);
+console.log(typedarray3);
+typedarray1[0] = 0x123d;
+typedarray1[1] = 0x123d;
+typedarray1[2] = 0x123d;
+typedarray1[3] = 0x123d;
+typedarray1[4] = 0x123d;
+console.log(typedarray1[0]);
+console.log(typedarray1[1]);
+console.log(typedarray1[2]);
+console.log(typedarray1[3]);
+console.log(typedarray1[4]);

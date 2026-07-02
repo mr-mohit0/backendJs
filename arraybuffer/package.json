@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "type": "file:../../../node"
+  },
+  "dependencies": {
+    "types": "file:../../../node"
+  }
+}
