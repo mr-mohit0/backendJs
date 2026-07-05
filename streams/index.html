@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Streaming</title>
+</head>
+<body>
+
+    <h1>My Video</h1>
+
+    <video
+        id="video"
+        width="700"
+        controls
+        height="720px"
+        preload="metadata">
+    </video>
+
+    <script>
+        const video = document.getElementById("video");
+
+        // Directly point to your backend
+        video.src = "http://localhost:3000/video";
+
+        video.addEventListener("loadedmetadata", () => {
+            console.log("Duration:", video.duration);
+        });
+
+        video.addEventListener("play", () => {
+            console.log("Playing...");
+        });
+
+        video.addEventListener("pause", () => {
+            console.log("Paused");
+        });
+
+        video.addEventListener("ended", () => {
+            console.log("Finished");
+        });
+
+        video.addEventListener("error", (e) => {
+            console.error(video.error);
+        });
+    </script>
+
+</body>
+</html>
